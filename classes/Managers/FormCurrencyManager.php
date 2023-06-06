@@ -34,7 +34,7 @@ class FormCurrencyManager {
 		} else {
 			add_filter( 'gform_pre_render', array( &$this, 'render_form' ) );
 		}
-
+		add_action( 'get_header', [$this, 'set_currency'], 9999 );
 		add_filter( 'gform_currencies', array($this, 'fix_eur_separators') );
 		add_filter( 'gform_currency', array(&$this, 'change_currency') );
 	}
@@ -46,6 +46,35 @@ class FormCurrencyManager {
 		}
 
 		return $currency;
+	}
+
+	public function set_currency(  )
+	{
+		global $post;
+
+		if (empty($post)) {
+			return; // Exit if no post object is available
+		}
+
+		// Regular expression pattern to match the Gravity Forms shortcode
+		$pattern = '/\[gravityform[\s\S]*id="(.*?)"/i';
+
+		// Check if the post content contains the Gravity Forms shortcode
+		if (has_shortcode($post->post_content, 'gravityform') || has_shortcode($post->post_content, 'gravityforms')) {
+			preg_match($pattern, $post->post_content, $matches);
+			if (isset($matches[1])) {
+				$form_id = $matches[1];
+				// var_dump($form_id);die;
+
+				// Form ID is available, you can now perform actions based on it
+				// For example, echo the form ID:
+				$form = \GFAPI::get_form($form_id);
+
+				if (!is_wp_error($form)) {
+					$this->_currency = $form['multi_currency_selector'];
+				}
+			}
+		}
 	}
 
 	public function render_form($form)
@@ -72,4 +101,6 @@ class FormCurrencyManager {
 
 		return false;
 	}
+
 }
+
