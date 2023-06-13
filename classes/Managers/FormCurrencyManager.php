@@ -1,7 +1,7 @@
 <?php
 
 
-namespace GFMultiCurrency\Managers;
+namespace LeverageIT\GFMultiCurrency\Managers;
 
 
 class FormCurrencyManager {
@@ -27,20 +27,67 @@ class FormCurrencyManager {
 		$this->addFilters();
 	}
 
-	public function addFilters()
-	{
-		if (is_admin()) {
-			add_action( 'gform_admin_pre_render', array( &$this, 'render_form' ) );
-		} else {
-			add_filter( 'gform_pre_render', array( &$this, 'render_form' ) );
-		}
-		add_action( 'get_header', [$this, 'set_currency'], 9999 );
-		add_filter( 'gform_currencies', array($this, 'fix_eur_separators') );
-		add_filter( 'gform_currency', array(&$this, 'change_currency') );
-	}
+    public function addFilters()
+    {
+        if (is_admin()) {
+            add_action( 'gform_admin_pre_render', array( &$this, 'render_form' ) );
+        } else {
+            add_filter( 'gform_pre_render', array( &$this, 'render_form' ) );
+        }
+        add_filter( 'gform_currencies', array($this, 'fix_eur_separators') );
+        add_filter( 'gform_currency', array(&$this, 'change_currency') );
+
+        // add_filter('gform_yaadpay_form_query', [$this, 'yaadpay_integration'], 20, 2);
+        add_filter( 'gform_entry_pre_update', [$this, 'pre_entry_update'], 20, 2 );
+//        add_filter( 'gform_notification', [$this, 'modify_notification_fields'], 10, 3 );
+
+    }
+
+    public function modify_notification_fields( $notification, $form, $entry )
+    {
+        $currency = $form['multi_currency_selector'];
+        if(!$currency) return $entry;
+        $entry['currency'] = $currency;
+        $this->_currency = $currency;
+        // Update the entry in the database
+        \GFAPI::update_entry( $entry );
+
+        // Return the modified notification object
+        return $notification;
+    }
+
+    public function pre_entry_update( $entry, $original_entry )
+    {
+        $form_id = rgar($entry, 'form_id');
+        $form = \GFAPI::get_form($form_id);
+        $currency = $form['multi_currency_selector'];
+        if(!$currency) return $entry;
+
+        $entry['currency'] = $currency;
+
+        $gform_order = maybe_unserialize( rgar( $entry, 'gform_order' ) );
+        if ( is_array( $gform_order ) ) {
+            $gform_order['currency'] = 'USD'; // Replace 'USD' with the desired currency code
+            gform_update_meta( $entry['id'], 'gform_order', maybe_serialize( $gform_order ) );
+        }
+
+        return $entry;
+    }
+
+    public function yaadpay_integration( $query_string, $form )
+    {
+        parse_str($query_string, $query_array);
+        $currency = $form['multi_currency_selector'];
+//        $currency = 'ILS';
+        if(!$currency) return $query_string;
+
+        $query_array['Coin'] = $currency;
+        return http_build_query($query_array);
+    }
 
 	public function change_currency($currency)
 	{
+        $this->set_currency();
 		if ($this->_currency) {
 			$currency = $this->_currency;
 		}
