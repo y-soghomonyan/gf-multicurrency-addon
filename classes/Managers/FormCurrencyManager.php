@@ -6,26 +6,26 @@ namespace LeverageIT\GFMultiCurrency\Managers;
 
 class FormCurrencyManager {
 
-	private static $instance;
+    private static $instance;
 
-	private $_currency;
+    private $_currency;
 
-	public static function init()
-	{
-		if (!self::$instance) {
-			self::$instance = new static();
-		}
+    public static function init()
+    {
+        if (!self::$instance) {
+            self::$instance = new static();
+        }
 
-		return self::$instance;
-	}
+        return self::$instance;
+    }
 
-	public function __construct()
-	{
-		if (!$this->is_gravityforms_supported()) {
-			return false;
-		}
-		$this->addFilters();
-	}
+    public function __construct()
+    {
+        if (!$this->is_gravityforms_supported()) {
+            return false;
+        }
+        $this->addFilters();
+    }
 
     public function addFilters()
     {
@@ -78,76 +78,73 @@ class FormCurrencyManager {
     {
         parse_str($query_string, $query_array);
         $currency = $form['multi_currency_selector'];
-//        $currency = 'ILS';
         if(!$currency) return $query_string;
 
         $query_array['Coin'] = $currency;
         return http_build_query($query_array);
     }
 
-	public function change_currency($currency)
-	{
+    public function change_currency($currency)
+    {
         $this->set_currency();
-		if ($this->_currency) {
-			$currency = $this->_currency;
-		}
+        if ($this->_currency) {
+            $currency = $this->_currency;
+        }
 
-		return $currency;
-	}
+        return $currency;
+    }
 
-	public function set_currency(  )
-	{
-		global $post;
+    public function set_currency(  )
+    {
+        global $post;
 
-		if (empty($post)) {
-			return; // Exit if no post object is available
-		}
+        if (empty($post) && empty($_POST['form_id'])) {
+            return; // Exit if no post object is available
+        }
 
-		// Regular expression pattern to match the Gravity Forms shortcode
-		$pattern = '/\[gravityform[\s\S]*id="(.*?)"/i';
+        // Regular expression pattern to match the Gravity Forms shortcode
+        $pattern = '/\[gravityform[\s\S]*id="(.*?)"/i';
+        // Check if the post content contains the Gravity Forms shortcode
+        if (has_shortcode($post->post_content, 'gravityform') || has_shortcode($post->post_content, 'gravityforms')) {
+            preg_match($pattern, $post->post_content, $matches);
+            if (isset($matches[1])) {
+                $form_id = $matches[1];
 
-		// Check if the post content contains the Gravity Forms shortcode
-		if (has_shortcode($post->post_content, 'gravityform') || has_shortcode($post->post_content, 'gravityforms')) {
-			preg_match($pattern, $post->post_content, $matches);
-			if (isset($matches[1])) {
-				$form_id = $matches[1];
-				// var_dump($form_id);die;
+            }
+        }
 
-				// Form ID is available, you can now perform actions based on it
-				// For example, echo the form ID:
-				$form = \GFAPI::get_form($form_id);
+        $form_id = $_POST['form_id'] ?? $form_id;
+        $form = \GFAPI::get_form($form_id);
 
-				if (!is_wp_error($form)) {
-					$this->_currency = $form['multi_currency_selector'];
-				}
-			}
-		}
-	}
+        if (!is_wp_error($form)) {
+            $this->_currency = $form['multi_currency_selector'];
+        }
+    }
 
-	public function render_form($form)
-	{
-		if (isset($form['multi_currency_selector']) && $form['multi_currency_selector']) {
-			$this->_currency = $form['multi_currency_selector'];
-		}
-		return $form;
-	}
+    public function render_form($form)
+    {
+        if (isset($form['multi_currency_selector']) && $form['multi_currency_selector']) {
+            $this->_currency = $form['multi_currency_selector'];
+        }
+        return $form;
+    }
 
-	public function fix_eur_separators( $currencies )
-	{
-		$currencies['EUR']['thousand_separator'] = ',';
-		$currencies['EUR']['decimal_separator'] = '.';
+    public function fix_eur_separators( $currencies )
+    {
+        $currencies['EUR']['thousand_separator'] = ',';
+        $currencies['EUR']['decimal_separator'] = '.';
 
-		return $currencies;
-	}
+        return $currencies;
+    }
 
-	private function is_gravityforms_supported()
-	{
-		if (class_exists("\GFCommon")) {
-			return true;
-		}
+    private function is_gravityforms_supported()
+    {
+        if (class_exists("\GFCommon")) {
+            return true;
+        }
 
-		return false;
-	}
+        return false;
+    }
 
 }
 
