@@ -78,6 +78,7 @@ class FormCurrencyManager {
     {
         parse_str($query_string, $query_array);
         $currency = $form['multi_currency_selector'];
+//        $currency = 'ILS';
         if(!$currency) return $query_string;
 
         $query_array['Coin'] = $currency;
@@ -98,26 +99,31 @@ class FormCurrencyManager {
     {
         global $post;
 
-        if (empty($post) && empty($_POST['form_id'])) {
-            return; // Exit if no post object is available
-        }
-
         // Regular expression pattern to match the Gravity Forms shortcode
         $pattern = '/\[gravityform[\s\S]*id="(.*?)"/i';
+
         // Check if the post content contains the Gravity Forms shortcode
-        if (has_shortcode($post->post_content, 'gravityform') || has_shortcode($post->post_content, 'gravityforms')) {
+        if ($post && has_shortcode($post->post_content, 'gravityform') || has_shortcode($post->post_content, 'gravityforms')) {
             preg_match($pattern, $post->post_content, $matches);
             if (isset($matches[1])) {
                 $form_id = $matches[1];
+                // var_dump($form_id);die;
 
+                // Form ID is available, you can now perform actions based on it
+                // For example, echo the form ID:
             }
         }
 
-        $form_id = $_POST['form_id'] ?? $form_id;
-        $form = \GFAPI::get_form($form_id);
+        if(!$form_id){
+            $form_id = $_POST['form_id'] ?? '';
+        }
 
-        if (!is_wp_error($form)) {
-            $this->_currency = $form['multi_currency_selector'];
+        if($form_id){
+            $form = \GFAPI::get_form($form_id);
+
+            if (!is_wp_error($form)) {
+                $this->_currency = $form['multi_currency_selector'];
+            }
         }
     }
 
