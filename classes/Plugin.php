@@ -2,8 +2,8 @@
 
 namespace GFMultiCurrency;
 
-use GFMultiCurrency\Managers\FormCurrencyManager;
-use GFMultiCurrency\Managers\FormFieldsManager;
+use LeverageIT\GFMultiCurrency\Managers\FormCurrencyManager;
+use LeverageIT\GFMultiCurrency\Managers\FormFieldsManager;
 
 class Plugin
 {

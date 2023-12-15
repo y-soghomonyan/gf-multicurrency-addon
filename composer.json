@@ -2,7 +2,7 @@
   "autoload": {
     "psr-4": {
       "GFMultiCurrency\\": "classes",
-      "GFMultiCurrency\\Managers\\": "managers"
+      "LeverageIT\\GFMultiCurrency\\Managers\\": "classes/Managers"
     }
   }
 }

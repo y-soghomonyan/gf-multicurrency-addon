@@ -1,6 +1,6 @@
 <?php
 
-namespace GFMultiCurrency\Managers;
+namespace LeverageIT\GFMultiCurrency\Managers;
 
 class FormFieldsManager
 {
